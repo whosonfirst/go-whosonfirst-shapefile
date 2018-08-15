@@ -1,5 +1,7 @@
 package shapefile
 
+// https://www.esri.com/library/whitepapers/pdfs/shapefile.pdf
+
 import (
 	"errors"
 	"github.com/jonas-p/go-shp"
@@ -110,14 +112,37 @@ func FeatureToPoint(f geojson.Feature) (shp.Shape, error) {
 
 func FeatureToPolygon(f geojson.Feature) (shp.Shape, error) {
 
-	c, err := whosonfirst.Centroid(f)
+	polys, err := f.Polygons()
 
 	if err != nil {
 		return nil, err
 	}
 
-	coord := c.Coord()
+	points := make([]shp.Point, 0)
 
-	pt := shp.Point{coord.X, coord.Y}
-	return &pt, nil
+	for _, poly := range polys {
+
+		if len(poly.InteriorRings()) > 0 {
+			return nil, errors.New("Polygon has interior rings")
+		}
+
+		ext := poly.ExteriorRing()
+
+		for _, coord := range ext.Vertices() {
+			pt := shp.Point{coord.X, coord.Y}
+			points = append(points, pt)
+		}
+	}
+
+	count_polys := len(polys)
+	count_points := len(points)
+
+	polygon := shp.Polygon{
+		NumParts:  int32(count_polys),
+		NumPoints: int32(count_points),
+		Parts:     make([]int32, 0), // WHAT???
+		Points:    points,
+	}
+
+	return &polygon, nil
 }
