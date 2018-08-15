@@ -8,6 +8,7 @@ self:   prep rmdeps
 	if test -d src/github.com/whosonfirst/go-whosonfirst-shapefile; then rm -rf src/github.com/whosonfirst/go-whosonfirst-shapefile; fi
 	mkdir -p src/github.com/whosonfirst/go-whosonfirst-shapefile
 	cp -r *.go src/github.com/whosonfirst/go-whosonfirst-shapefile/
+	cp -r index src/github.com/whosonfirst/go-whosonfirst-shapefile/
 	cp -r vendor/* src/
 
 rmdeps:
@@ -34,6 +35,7 @@ vendor-deps: rmdeps deps
 
 fmt:
 	go fmt cmd/*.go
+	go fmt index/*.go
 	go fmt *.go
 
 bin: 	self
