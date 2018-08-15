@@ -7,7 +7,6 @@ bin/wof-*
 *.log
 *.json
 .travis.yml
-*.db*
-*.db-journal
-inventory.html
-inventory.json
+*.dbf
+*.shp
+*.shx

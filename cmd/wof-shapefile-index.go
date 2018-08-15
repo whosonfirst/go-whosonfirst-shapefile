@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/jonas-p/go-shp"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2/feature"
 	"github.com/whosonfirst/go-whosonfirst-index"
 	"github.com/whosonfirst/go-whosonfirst-index/utils"
@@ -37,15 +36,15 @@ func main() {
 	stdout := io.Writer(os.Stdout)
 	logger.AddLogger(stdout, "status")
 
-	/* please move this in to a proper library */
-
-	writer, err := shp.Create(*out, shp.POLYGONZ)
+	writer, err := shapefile.NewWriter(*out)
 
 	if err != nil {
 		logger.Fatal("Failed to create new shape because %s", err)
 	}
 
-	defer writer.Close()
+	writer.Logger = logger
+
+	/* please move all of this in to a package */
 
 	mu := new(sync.Mutex)
 
@@ -80,7 +79,7 @@ func main() {
 		mu.Lock()
 		defer mu.Unlock()
 
-		_, err = shapefile.AddFeature(writer, f)
+		_, err = writer.AddFeature(f)
 
 		if err != nil {
 			return err
@@ -103,7 +102,6 @@ func main() {
 		t2 := time.Since(t1)
 
 		i := atomic.LoadInt64(&indexer.Indexed) // please just make this part of go-whosonfirst-index
-
 		logger.Status("time to index all (%d) : %v", i, t2)
 	}
 
@@ -135,5 +133,6 @@ func main() {
 		logger.Fatal("Failed to index paths in %s mode because: %s", *mode, err)
 	}
 
+	writer.Close()
 	os.Exit(0)
 }
