@@ -18,6 +18,29 @@ type Writer struct {
 	Logger      *log.WOFLogger
 }
 
+func ShapeTypes() []string {
+
+	return []string{
+		"POINT",
+		"POLYGON",
+	}
+}
+
+func IsValidShapeType(test string) bool {
+
+	valid := false
+
+	for _, shapetype := range ShapeTypes() {
+
+		if shapetype == test {
+			valid = true
+			break
+		}
+	}
+
+	return valid
+}
+
 func NewWriterFromString(path string, shapetype string) (*Writer, error) {
 
 	switch strings.ToUpper(shapetype) {
@@ -46,7 +69,7 @@ func NewWriter(path string, shapetype shp.ShapeType) (*Writer, error) {
 		shp.StringField("NAME", 64),
 		shp.StringField("PLACETYPE", 64),
 		shp.StringField("INCEPTION", 64),
-		shp.StringField("CESSATION", 64),				
+		shp.StringField("CESSATION", 64),
 	}
 
 	shapewriter.SetFields(fields)
@@ -83,7 +106,7 @@ func (wr *Writer) AddFeature(f geojson.Feature) (int32, error) {
 	wr.shapewriter.WriteAttribute(i, 1, f.Name())
 	wr.shapewriter.WriteAttribute(i, 2, f.Placetype())
 	wr.shapewriter.WriteAttribute(i, 3, whosonfirst.Inception(f))
-	wr.shapewriter.WriteAttribute(i, 4, whosonfirst.Cessation(f))	
+	wr.shapewriter.WriteAttribute(i, 4, whosonfirst.Cessation(f))
 
 	return idx, nil
 }
@@ -124,7 +147,7 @@ func FeatureToPolygon(f geojson.Feature) (shp.Shape, error) {
 	}
 
 	points := make([][]shp.Point, 0)
-	
+
 	for _, poly := range polys {
 
 		if len(poly.InteriorRings()) > 0 {
@@ -134,7 +157,7 @@ func FeatureToPolygon(f geojson.Feature) (shp.Shape, error) {
 		ext := poly.ExteriorRing()
 
 		pts := make([]shp.Point, 0)
-	
+
 		for _, coord := range ext.Vertices() {
 			pt := shp.Point{coord.X, coord.Y}
 			pts = append(pts, pt)

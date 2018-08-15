@@ -23,7 +23,22 @@ There is a lot still to do including moving code in to generic package (library)
 ### wof-shapefile-index
 
 ```
-$> ./bin/wof-shapefile-index -shapetype POLYGON -out test.shp -timings /usr/local/data/whosonfirst-data-constituency-us/
+./bin/wof-shapefile-index -h
+Usage of ./bin/wof-shapefile-index:
+  -mode string
+    	The mode to use importing data. Valid modes are: directory,feature,feature-collection,files,geojson-ls,meta,path,repo,sqlite. (default "repo")
+  -out string
+    	Where to write the new shapefile
+  -shapetype string
+    	The shapefile type to use indexing data. Valid types are: POINT,POLYGON. (default "POINT")
+  -timings
+    	Display timings during and after indexing
+```
+
+For example:
+
+```
+$> ./bin/wof-shapefile-index -shapetype POLYGON -out test.shp -mode repo /usr/local/data/whosonfirst-data-constituency-us/
 ...time passes
 
 $> du -h test.*

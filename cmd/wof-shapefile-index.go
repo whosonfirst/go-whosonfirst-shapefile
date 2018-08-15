@@ -24,10 +24,14 @@ func main() {
 	valid_modes := strings.Join(index.Modes(), ",")
 	desc_modes := fmt.Sprintf("The mode to use importing data. Valid modes are: %s.", valid_modes)
 
-	mode := flag.String("mode", "repo", desc_modes)
-	out := flag.String("out", "", "...")
+	valid_types := strings.Join(shapefile.ShapeTypes(), ",")
+	desc_types := fmt.Sprintf("The shapefile type to use indexing data. Valid types are: %s.", valid_types)
 
-	shapetype := flag.String("shapetype", "POINT", "...")
+	mode := flag.String("mode", "repo", desc_modes)
+
+	shapetype := flag.String("shapetype", "POINT", desc_types)
+
+	out := flag.String("out", "", "Where to write the new shapefile")
 
 	timings := flag.Bool("timings", false, "Display timings during and after indexing")
 
