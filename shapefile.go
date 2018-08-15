@@ -6,6 +6,7 @@ import (
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2/properties/whosonfirst"
 	"github.com/whosonfirst/go-whosonfirst-log"
+	"strings"
 )
 
 type Writer struct {
@@ -14,9 +15,17 @@ type Writer struct {
 	Logger      *log.WOFLogger
 }
 
-func NewPointWriter(path string) (*Writer, error) {
+func NewWriterFromString(path string, shapetype string) (*Writer, error) {
 
-	return NewWriter(path, shp.POINT)
+	switch strings.ToUpper(shapetype) {
+
+	case "POINT":
+		return NewWriter(path, shp.POINT)
+	case "POLYGON":
+		return NewWriter(path, shp.POLYGON)
+	default:
+		return nil, errors.New("Unsupported shape type")
+	}
 }
 
 func NewWriter(path string, shapetype shp.ShapeType) (*Writer, error) {
@@ -78,12 +87,28 @@ func FeatureToShape(f geojson.Feature, shapetype shp.ShapeType) (shp.Shape, erro
 
 	case shp.POINT:
 		return FeatureToPoint(f)
+	case shp.POLYGON:
+		return FeatureToPolygon(f)
 	default:
 		return nil, errors.New("Unsupported shape type")
 	}
 }
 
 func FeatureToPoint(f geojson.Feature) (shp.Shape, error) {
+
+	c, err := whosonfirst.Centroid(f)
+
+	if err != nil {
+		return nil, err
+	}
+
+	coord := c.Coord()
+
+	pt := shp.Point{coord.X, coord.Y}
+	return &pt, nil
+}
+
+func FeatureToPolygon(f geojson.Feature) (shp.Shape, error) {
 
 	c, err := whosonfirst.Centroid(f)
 

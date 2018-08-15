@@ -27,6 +27,8 @@ func main() {
 	mode := flag.String("mode", "repo", desc_modes)
 	out := flag.String("out", "", "...")
 
+	shapetype := flag.String("shapetype", "POINT", "...")
+
 	timings := flag.Bool("timings", false, "Display timings during and after indexing")
 
 	flag.Parse()
@@ -36,7 +38,7 @@ func main() {
 	stdout := io.Writer(os.Stdout)
 	logger.AddLogger(stdout, "status")
 
-	writer, err := shapefile.NewPointWriter(*out)
+	writer, err := shapefile.NewWriterFromString(*out, *shapetype)
 
 	if err != nil {
 		logger.Fatal("Failed to create new shape because %s", err)
