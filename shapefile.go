@@ -63,7 +63,17 @@ func NewWriter(path string, shapetype shp.ShapeType) (*Writer, error) {
 	}
 
 	// something something something SPR...
+	// https://github.com/whosonfirst/go-whosonfirst-spr
 
+	// there is also a whole stack of pre-existing logic here that I
+	// am not keen to formalize but that should be possible to support:
+	// https://github.com/whosonfirst/py-mapzen-whosonfirst-utils/blob/master/scripts/wof-csv-to-feature-collection
+
+	// so maybe some sort of generic AttributesFunction for which we
+	// can define a sensible default (SPR, etc) but that people can
+	// override to suit their needs... or something like that
+	// (20180815/thisisaaronland)
+	
 	fields := []shp.Field{
 		shp.StringField("ID", 64),
 		shp.StringField("NAME", 64),
@@ -101,7 +111,9 @@ func (wr *Writer) AddFeature(f geojson.Feature) (int32, error) {
 	i := int(idx)
 
 	// something something something SPR...
-
+	// see notes about attributes above...
+	// (20180815/thisisaaronland)
+	
 	wr.shapewriter.WriteAttribute(i, 0, f.Id())
 	wr.shapewriter.WriteAttribute(i, 1, f.Name())
 	wr.shapewriter.WriteAttribute(i, 2, f.Placetype())
