@@ -1,6 +1,7 @@
 package shapefile
 
 import (
+	"errors"
 	"github.com/jonas-p/go-shp"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2/properties/whosonfirst"
@@ -9,12 +10,18 @@ import (
 
 type Writer struct {
 	shapewriter *shp.Writer
+	shapetype   shp.ShapeType // https://godoc.org/github.com/jonas-p/go-shp#ShapeType
 	Logger      *log.WOFLogger
 }
 
-func NewWriter(path string) (*Writer, error) {
+func NewPointWriter(path string) (*Writer, error) {
 
-	shapewriter, err := shp.Create(path, shp.POINT)
+	return NewWriter(path, shp.POINT)
+}
+
+func NewWriter(path string, shapetype shp.ShapeType) (*Writer, error) {
+
+	shapewriter, err := shp.Create(path, shapetype)
 
 	if err != nil {
 		return nil, err
@@ -34,6 +41,7 @@ func NewWriter(path string) (*Writer, error) {
 
 	wr := Writer{
 		shapewriter: shapewriter,
+		shapetype:   shapetype,
 		Logger:      logger,
 	}
 
@@ -46,7 +54,7 @@ func (wr *Writer) Close() {
 
 func (wr *Writer) AddFeature(f geojson.Feature) (int32, error) {
 
-	s, err := FeatureToShape(f)
+	s, err := FeatureToShape(f, wr.shapetype)
 
 	if err != nil {
 		return -1, nil
@@ -64,7 +72,18 @@ func (wr *Writer) AddFeature(f geojson.Feature) (int32, error) {
 	return idx, nil
 }
 
-func FeatureToShape(f geojson.Feature) (shp.Shape, error) {
+func FeatureToShape(f geojson.Feature, shapetype shp.ShapeType) (shp.Shape, error) {
+
+	switch shapetype {
+
+	case shp.POINT:
+		return FeatureToPoint(f)
+	default:
+		return nil, errors.New("Unsupported shape type")
+	}
+}
+
+func FeatureToPoint(f geojson.Feature) (shp.Shape, error) {
 
 	c, err := whosonfirst.Centroid(f)
 

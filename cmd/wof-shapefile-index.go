@@ -36,7 +36,7 @@ func main() {
 	stdout := io.Writer(os.Stdout)
 	logger.AddLogger(stdout, "status")
 
-	writer, err := shapefile.NewWriter(*out)
+	writer, err := shapefile.NewPointWriter(*out)
 
 	if err != nil {
 		logger.Fatal("Failed to create new shape because %s", err)
