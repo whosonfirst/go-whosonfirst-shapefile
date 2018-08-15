@@ -2,6 +2,7 @@ package whosonfirst
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/skelterjohn/geom"
 	"github.com/tidwall/gjson"
 	"github.com/whosonfirst/go-whosonfirst-flags"
@@ -137,6 +138,50 @@ func Name(f geojson.Feature) string {
 	}
 
 	return utils.StringProperty(f.Bytes(), possible, "a place with no name")
+}
+
+func Label(f geojson.Feature) string {
+
+	possible := []string{
+		"properties.wof:label",
+	}
+
+	return utils.StringProperty(f.Bytes(), possible, "")
+}
+
+func LabelOrDerived(f geojson.Feature) string {
+
+	label := Label(f)
+
+	if label == "" {
+
+		name := f.Name()
+
+		inc := utils.StringProperty(f.Bytes(), []string{"properties.edtf:inception"}, "uuuu")
+		ces := utils.StringProperty(f.Bytes(), []string{"properties.edtf:cessation"}, "uuuu")
+
+		label = fmt.Sprintf("%s (%s - %s)", name, inc, ces)
+	}
+
+	return label
+}
+
+func DateSpan(f geojson.Feature) string {
+
+	lower := utils.StringProperty(f.Bytes(), []string{"properties.date:inception_lower"}, "uuuu")
+	upper := utils.StringProperty(f.Bytes(), []string{"properties.date:cessation_upper"}, "uuuu")
+
+	/*
+		if lower == "uuuu" {
+			lower = utils.StringProperty(f.Bytes(), []string{"properties.edtf:inception"}, "uuuu")
+		}
+
+		if upper == "uuuu" {
+			upper = utils.StringProperty(f.Bytes(), []string{"properties.edtf:cessation"}, "uuuu")
+		}
+	*/
+
+	return fmt.Sprintf("%s-%s", lower, upper)
 }
 
 func ParentId(f geojson.Feature) int64 {
@@ -313,6 +358,36 @@ func Supersedes(f geojson.Feature) []int64 {
 	}
 
 	return supersedes
+}
+
+func BelongsTo(f geojson.Feature) []int64 {
+
+	belongsto := make([]int64, 0)
+
+	possible := gjson.GetBytes(f.Bytes(), "properties.wof:belongsto")
+
+	if possible.Exists() {
+
+		for _, id := range possible.Array() {
+			belongsto = append(belongsto, id.Int())
+		}
+	}
+
+	return belongsto
+}
+
+func IsBelongsTo(f geojson.Feature, id int64) bool {
+
+	possible := BelongsTo(f)
+
+	for _, test := range possible {
+
+		if test == id {
+			return true
+		}
+	}
+
+	return false
 }
 
 func Names(f geojson.Feature) map[string][]string {
