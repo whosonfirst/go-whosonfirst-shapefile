@@ -14,8 +14,29 @@ All of this package's dependencies are bundled with the code in the `vendor` dir
 
 ## Important
 
-This does not work yet.
+This works. Until it doesn't. Currently it only write points and polygons.
+
+There is a lot still to do including moving code in to generic package (library) functions and sorting out common attributes.
+
+## Tools
+
+### wof-shapefile-index
+
+```
+$> ./bin/wof-shapefile-index -shapetype POLYGON -out test.shp -timings /usr/local/data/whosonfirst-data-constituency-us/
+...time passes
+
+$> du -h test.*
+3.0M	test.dbf
+401M	test.shp
+ 56K	test.shx
+```
+
+Which ends up looking something like this:
+
+![](docs/images/20180815-constituencies.png)
 
 ## See also:
 
 * https://github.com/jonas-p/go-shp
+* https://www.esri.com/library/whitepapers/pdfs/shapefile.pdf

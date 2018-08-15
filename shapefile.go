@@ -8,6 +8,7 @@ import (
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2/properties/whosonfirst"
 	"github.com/whosonfirst/go-whosonfirst-log"
+	// golog "log"
 	"strings"
 )
 
@@ -44,6 +45,8 @@ func NewWriter(path string, shapetype shp.ShapeType) (*Writer, error) {
 		shp.StringField("ID", 64),
 		shp.StringField("NAME", 64),
 		shp.StringField("PLACETYPE", 64),
+		shp.StringField("INCEPTION", 64),
+		shp.StringField("CESSATION", 64),				
 	}
 
 	shapewriter.SetFields(fields)
@@ -79,6 +82,8 @@ func (wr *Writer) AddFeature(f geojson.Feature) (int32, error) {
 	wr.shapewriter.WriteAttribute(i, 0, f.Id())
 	wr.shapewriter.WriteAttribute(i, 1, f.Name())
 	wr.shapewriter.WriteAttribute(i, 2, f.Placetype())
+	wr.shapewriter.WriteAttribute(i, 3, whosonfirst.Inception(f))
+	wr.shapewriter.WriteAttribute(i, 4, whosonfirst.Cessation(f))	
 
 	return idx, nil
 }
@@ -118,8 +123,8 @@ func FeatureToPolygon(f geojson.Feature) (shp.Shape, error) {
 		return nil, err
 	}
 
-	points := make([]shp.Point, 0)
-
+	points := make([][]shp.Point, 0)
+	
 	for _, poly := range polys {
 
 		if len(poly.InteriorRings()) > 0 {
@@ -128,21 +133,16 @@ func FeatureToPolygon(f geojson.Feature) (shp.Shape, error) {
 
 		ext := poly.ExteriorRing()
 
+		pts := make([]shp.Point, 0)
+	
 		for _, coord := range ext.Vertices() {
 			pt := shp.Point{coord.X, coord.Y}
-			points = append(points, pt)
+			pts = append(pts, pt)
 		}
+
+		points = append(points, pts)
 	}
 
-	count_polys := len(polys)
-	count_points := len(points)
-
-	polygon := shp.Polygon{
-		NumParts:  int32(count_polys),
-		NumPoints: int32(count_points),
-		Parts:     make([]int32, 0), // WHAT???
-		Points:    points,
-	}
-
-	return &polygon, nil
+	polygon := shp.NewPolyLine(points)
+	return polygon, nil
 }
