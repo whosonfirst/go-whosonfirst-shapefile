@@ -8,7 +8,6 @@ import (
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2/properties/whosonfirst"
 	"github.com/whosonfirst/go-whosonfirst-log"
-	// golog "log"
 	"strings"
 )
 
@@ -73,7 +72,7 @@ func NewWriter(path string, shapetype shp.ShapeType) (*Writer, error) {
 	// can define a sensible default (SPR, etc) but that people can
 	// override to suit their needs... or something like that
 	// (20180815/thisisaaronland)
-	
+
 	fields := []shp.Field{
 		shp.StringField("ID", 64),
 		shp.StringField("NAME", 64),
@@ -113,7 +112,7 @@ func (wr *Writer) AddFeature(f geojson.Feature) (int32, error) {
 	// something something something SPR...
 	// see notes about attributes above...
 	// (20180815/thisisaaronland)
-	
+
 	wr.shapewriter.WriteAttribute(i, 0, f.Id())
 	wr.shapewriter.WriteAttribute(i, 1, f.Name())
 	wr.shapewriter.WriteAttribute(i, 2, f.Placetype())
