@@ -25,6 +25,12 @@ There is a lot still to do including moving code in to generic package (library)
 ```
 ./bin/wof-shapefile-index -h
 Usage of ./bin/wof-shapefile-index:
+  -belongs-to value
+    	Include only records that belong to this ID. You may pass multiple -belongs-to flags.
+  -exclude-placetype value
+    	Exclude records of this placetype. You may pass multiple -exclude-placetype flags.
+  -include-placetype value
+    	Include only records of this placetype. You may pass multiple -include-placetype flags.
   -mode string
     	The mode to use importing data. Valid modes are: directory,feature,feature-collection,files,geojson-ls,meta,path,repo,sqlite. (default "repo")
   -out string

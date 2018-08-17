@@ -5,8 +5,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/whosonfirst/go-whosonfirst-cli/flags"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2/feature"
-	_ "github.com/whosonfirst/go-whosonfirst-geojson-v2/properties/whosonfirst"
+	"github.com/whosonfirst/go-whosonfirst-geojson-v2/properties/whosonfirst"
 	"github.com/whosonfirst/go-whosonfirst-index"
 	"github.com/whosonfirst/go-whosonfirst-index/utils"
 	"github.com/whosonfirst/go-whosonfirst-log"
@@ -27,6 +28,21 @@ func main() {
 
 	valid_types := strings.Join(shapefile.ShapeTypes(), ",")
 	desc_types := fmt.Sprintf("The shapefile type to use indexing data. Valid types are: %s.", valid_types)
+
+	// something something something take the filter code in go-whosonfirst-pip-v2
+	// and make it generally applicable to something like this - ultimately it should
+	// be made to work with go-whosonfirst-index callback function
+	// filters, err := filter.NewSPRFilterFromQuery(query)
+	// (20180817/thisisaaronland)
+
+	var include_placetype flags.MultiString
+	flag.Var(&include_placetype, "include-placetype", "Include only records of this placetype. You may pass multiple -include-placetype flags.")
+
+	var exclude_placetype flags.MultiString
+	flag.Var(&exclude_placetype, "exclude-placetype", "Exclude records of this placetype. You may pass multiple -exclude-placetype flags.")
+
+	var belongs_to flags.MultiInt64
+	flag.Var(&belongs_to, "belongs-to", "Include only records that belong to this ID. You may pass multiple -belongs-to flags.")
 
 	mode := flag.String("mode", "repo", desc_modes)
 
@@ -80,6 +96,39 @@ func main() {
 			if err != nil && !warning.IsWarning(err) {
 				msg := fmt.Sprintf("Unable to load %s, because %s", path, err)
 				return errors.New(msg)
+			}
+		}
+
+		pt := f.Placetype()
+		
+		if len(include_placetype) > 0 {
+
+			if !include_placetype.Contains(pt) {
+				return nil
+			}
+		}
+
+		if len(exclude_placetype) > 0 {
+
+			if exclude_placetype.Contains(pt) {
+				return nil
+			}
+		}
+
+		if len(belongs_to) > 0 {
+
+			ok := false
+
+			for _, candidate := range belongs_to {
+
+				if whosonfirst.IsBelongsTo(f, candidate) {
+					ok = true
+					break
+				}
+			}
+
+			if !ok {
+				return nil
 			}
 		}
 
