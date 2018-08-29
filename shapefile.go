@@ -8,12 +8,15 @@ import (
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2/properties/whosonfirst"
 	"github.com/whosonfirst/go-whosonfirst-log"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
 type Writer struct {
 	shapewriter *shp.Writer
 	shapetype   shp.ShapeType // https://godoc.org/github.com/jonas-p/go-shp#ShapeType
+	path        string
 	Logger      *log.WOFLogger
 }
 
@@ -55,7 +58,13 @@ func NewWriterFromString(path string, shapetype string) (*Writer, error) {
 
 func NewWriter(path string, shapetype shp.ShapeType) (*Writer, error) {
 
-	shapewriter, err := shp.Create(path, shapetype)
+	abs_path, err := filepath.Abs(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	shapewriter, err := shp.Create(abs_path, shapetype)
 
 	if err != nil {
 		return nil, err
@@ -89,13 +98,34 @@ func NewWriter(path string, shapetype shp.ShapeType) (*Writer, error) {
 		shapewriter: shapewriter,
 		shapetype:   shapetype,
 		Logger:      logger,
+		path:        abs_path,
 	}
 
 	return &wr, nil
 }
 
-func (wr *Writer) Close() {
+func (wr *Writer) Close() error {
 	wr.shapewriter.Close()
+	return wr.WriteProjFile()
+}
+
+func (wr *Writer) WriteProjFile() error {
+
+	prj_path := strings.Replace(wr.path, ".shp", ".prj", -1)
+
+	fh, err := os.OpenFile(prj_path, os.O_RDWR|os.O_CREATE, 0644)
+
+	if err != nil {
+		return nil
+	}
+
+	_, err = fh.Write([]byte(`GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]`))
+
+	if err != nil {
+		return nil
+	}
+
+	return fh.Close()
 }
 
 func (wr *Writer) AddFeature(f geojson.Feature) (int32, error) {

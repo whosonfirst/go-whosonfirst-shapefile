@@ -49,14 +49,9 @@ $> ./bin/wof-shapefile-index -shapetype POLYGON -out test.shp -mode repo /usr/lo
 
 $> du -h test.*
 3.0M	test.dbf
+4.0K    test.prj
 401M	test.shp
  56K	test.shx
-```
-
-See the way there is no `test.prj` file? That is a known-known: For whatever reason the [go-shp](https://github.com/jonas-p/go-shp) package doesn't produce it and I haven't accounted for that yet. If you're wondering the projection is:
-
-```
-GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]
 ```
 
 All of which ends up looking something like this:

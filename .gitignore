@@ -10,3 +10,5 @@ bin/wof-*
 *.dbf
 *.shp
 *.shx
+*.prj
+.DS_Store

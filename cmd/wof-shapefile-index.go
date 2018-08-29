@@ -100,7 +100,7 @@ func main() {
 		}
 
 		pt := f.Placetype()
-		
+
 		if len(include_placetype) > 0 {
 
 			if !include_placetype.Contains(pt) {
