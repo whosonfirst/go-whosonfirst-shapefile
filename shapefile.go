@@ -5,6 +5,7 @@ package shapefile
 import (
 	"errors"
 	"github.com/jonas-p/go-shp"
+	"github.com/tidwall/gjson"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2/properties/whosonfirst"
 	"github.com/whosonfirst/go-whosonfirst-log"
@@ -23,6 +24,7 @@ type Writer struct {
 func ShapeTypes() []string {
 
 	return []string{
+		"MULTIPOINT",
 		"POINT",
 		"POLYGON",
 	}
@@ -47,6 +49,8 @@ func NewWriterFromString(path string, shapetype string) (*Writer, error) {
 
 	switch strings.ToUpper(shapetype) {
 
+	case "MULTIPOINT":
+		return NewWriter(path, shp.MULTIPOINT)
 	case "POINT":
 		return NewWriter(path, shp.POINT)
 	case "POLYGON":
@@ -156,6 +160,8 @@ func FeatureToShape(f geojson.Feature, shapetype shp.ShapeType) (shp.Shape, erro
 
 	switch shapetype {
 
+	case shp.MULTIPOINT:
+		return FeatureToMultiPoint(f)
 	case shp.POINT:
 		return FeatureToPoint(f)
 	case shp.POLYGON:
@@ -163,6 +169,91 @@ func FeatureToShape(f geojson.Feature, shapetype shp.ShapeType) (shp.Shape, erro
 	default:
 		return nil, errors.New("Unsupported shape type")
 	}
+}
+
+func FeatureToMultiPoint(f geojson.Feature) (shp.Shape, error) {
+
+	coords := gjson.GetBytes(f.Bytes(), "geometry.coordinates")
+
+	if !coords.Exists() {
+		return nil, errors.New("Missing coordinates")
+	}
+
+	points := make([]shp.Point, 0)
+
+	swlat := 0.0
+	swlon := 0.0
+	nelat := 0.0
+	nelon := 0.0
+
+	for _, c := range coords.Array() {
+
+		pt := c.Array()
+
+		lat := pt[1].Float()
+		lon := pt[0].Float()
+
+		shp_pt := shp.Point{lon, lat}
+		points = append(points, shp_pt)
+
+		if lat < swlat {
+			swlat = lat
+		}
+
+		if lon < swlon {
+			swlon = lon
+		}
+
+		if lat > nelat {
+			lat = nelat
+		}
+
+		if lon > nelon {
+			lon = nelon
+		}
+
+	}
+
+	box := shp.Box{
+		swlon, swlat, nelon, nelat,
+	}
+
+	num := int32(len(points))
+
+	multi := shp.MultiPoint{
+		NumPoints: num,
+		Points:    points,
+		Box:       box,
+	}
+
+	return &multi, nil
+}
+
+func FeatureToPolylineFromMultiPoint(f geojson.Feature) (shp.Shape, error) {
+
+	coords := gjson.GetBytes(f.Bytes(), "geometry.coordinates")
+
+	if !coords.Exists() {
+		return nil, errors.New("Missing coordinates")
+	}
+
+	points := make([]shp.Point, 0)
+
+	for _, c := range coords.Array() {
+
+		pt := c.Array()
+
+		lat := pt[1].Float()
+		lon := pt[0].Float()
+
+		shp_pt := shp.Point{lon, lat}
+		points = append(points, shp_pt)
+	}
+
+	poly := [][]shp.Point{points}
+
+	polygon := shp.NewPolyLine(poly)
+	return polygon, nil
 }
 
 func FeatureToPoint(f geojson.Feature) (shp.Shape, error) {
