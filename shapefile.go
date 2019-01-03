@@ -27,6 +27,7 @@ func ShapeTypes() []string {
 		"MULTIPOINT",
 		"POINT",
 		"POLYGON",
+		"POLYLINE",
 	}
 }
 
@@ -47,10 +48,14 @@ func IsValidShapeType(test string) bool {
 
 func NewWriterFromString(path string, shapetype string) (*Writer, error) {
 
+	// https://godoc.org/github.com/jonas-p/go-shp#ShapeType
+
 	switch strings.ToUpper(shapetype) {
 
 	case "MULTIPOINT":
 		return NewWriter(path, shp.MULTIPOINT)
+	case "POLYLINE":
+		return NewWriter(path, shp.POLYLINE)
 	case "POINT":
 		return NewWriter(path, shp.POINT)
 	case "POLYGON":
@@ -162,6 +167,8 @@ func FeatureToShape(f geojson.Feature, shapetype shp.ShapeType) (shp.Shape, erro
 
 	case shp.MULTIPOINT:
 		return FeatureToMultiPoint(f)
+	case shp.POLYLINE:
+		return FeatureToPolyline(f)
 	case shp.POINT:
 		return FeatureToPoint(f)
 	case shp.POLYGON:
@@ -229,7 +236,7 @@ func FeatureToMultiPoint(f geojson.Feature) (shp.Shape, error) {
 	return &multi, nil
 }
 
-func FeatureToPolylineFromMultiPoint(f geojson.Feature) (shp.Shape, error) {
+func FeatureToPolyline(f geojson.Feature) (shp.Shape, error) {
 
 	coords := gjson.GetBytes(f.Bytes(), "geometry.coordinates")
 
