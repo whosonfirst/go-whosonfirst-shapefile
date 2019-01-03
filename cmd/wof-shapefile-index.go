@@ -89,7 +89,7 @@ func main() {
 			return nil
 		}
 
-		f, err := feature.LoadWOFFeatureFromReader(fh)
+		f, err := feature.LoadGeoJSONFeatureFromReader(fh)
 
 		if err != nil {
 
