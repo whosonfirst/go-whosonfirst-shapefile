@@ -289,10 +289,12 @@ func FeatureToPolygon(f geojson.Feature) (shp.Shape, error) {
 
 	for _, poly := range polys {
 
+		/*
 		if len(poly.InteriorRings()) > 0 {
 			return nil, errors.New("Polygon has interior rings")
 		}
-
+		*/
+		
 		ext := poly.ExteriorRing()
 
 		pts := make([]shp.Point, 0)
