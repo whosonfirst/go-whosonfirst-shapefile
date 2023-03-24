@@ -4,22 +4,21 @@ package shapefile
 
 import (
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/jonas-p/go-shp"
 	"github.com/tidwall/gjson"
-	"github.com/whosonfirst/go-whosonfirst-geojson-v2"
-	"github.com/whosonfirst/go-whosonfirst-geojson-v2/properties/whosonfirst"
-	"github.com/whosonfirst/go-whosonfirst-log"	
+	"github.com/whosonfirst/go-whosonfirst-feature/properties"
 )
 
 type Writer struct {
 	shapewriter *shp.Writer
 	shapetype   shp.ShapeType // https://godoc.org/github.com/jonas-p/go-shp#ShapeType
 	path        string
-	Logger      *log.WOFLogger
+	Logger      *log.Logger
 }
 
 func ShapeTypes() []string {
@@ -102,7 +101,7 @@ func NewWriter(path string, shapetype shp.ShapeType) (*Writer, error) {
 
 	shapewriter.SetFields(fields)
 
-	logger := log.SimpleWOFLogger()
+	logger := log.Default()
 
 	wr := Writer{
 		shapewriter: shapewriter,
@@ -138,9 +137,30 @@ func (wr *Writer) WriteProjFile() error {
 	return fh.Close()
 }
 
-func (wr *Writer) AddFeature(f geojson.Feature) (int32, error) {
+func (wr *Writer) AddFeature(body []byte) (int32, error) {
 
-	s, err := FeatureToShape(f, wr.shapetype)
+	id, err := properties.Id(body)
+
+	if err != nil {
+		return -1, fmt.Errorf("Failed to derive ID, %w", err)
+	}
+
+	name, err := properties.Name(body)
+
+	if err != nil {
+		return -1, fmt.Errorf("Failed to derive name, %w", err)
+	}
+
+	placetype, err := properties.Placetype(body)
+
+	if err != nil {
+		return -1, fmt.Errorf("Failed to derive placetype, %w", err)
+	}
+
+	inception := properties.Inception(body)
+	cessation := properties.Cessation(body)
+	
+	s, err := FeatureToShape(body, wr.shapetype)
 
 	if err != nil {
 		return -1, nil
@@ -153,35 +173,37 @@ func (wr *Writer) AddFeature(f geojson.Feature) (int32, error) {
 	// see notes about attributes above...
 	// (20180815/thisisaaronland)
 
-	wr.shapewriter.WriteAttribute(i, 0, f.Id())
-	wr.shapewriter.WriteAttribute(i, 1, f.Name())
-	wr.shapewriter.WriteAttribute(i, 2, f.Placetype())
-	wr.shapewriter.WriteAttribute(i, 3, whosonfirst.Inception(f))
-	wr.shapewriter.WriteAttribute(i, 4, whosonfirst.Cessation(f))
+	str_id := strconv.FormatInt(id, 10)
+	
+	wr.shapewriter.WriteAttribute(i, 0, str_id)
+	wr.shapewriter.WriteAttribute(i, 1, name)
+	wr.shapewriter.WriteAttribute(i, 2, placetype)
+	wr.shapewriter.WriteAttribute(i, 3, inception)
+	wr.shapewriter.WriteAttribute(i, 4, cessation)
 
 	return idx, nil
 }
 
-func FeatureToShape(f geojson.Feature, shapetype shp.ShapeType) (shp.Shape, error) {
+func FeatureToShape(body []byte, shapetype shp.ShapeType) (shp.Shape, error) {
 
 	switch shapetype {
 
 	case shp.MULTIPOINT:
-		return FeatureToMultiPoint(f)
+		return FeatureToMultiPoint(body)
 	case shp.POLYLINE:
-		return FeatureToPolyline(f)
+		return FeatureToPolyline(body)
 	case shp.POINT:
-		return FeatureToPoint(f)
+		return FeatureToPoint(body)
 	case shp.POLYGON:
-		return FeatureToPolygon(f)
+		return FeatureToPolygon(body)
 	default:
 		return nil, errors.New("Unsupported shape type")
 	}
 }
 
-func FeatureToMultiPoint(f geojson.Feature) (shp.Shape, error) {
+func FeatureToMultiPoint(body []byte) (shp.Shape, error) {
 
-	coords := gjson.GetBytes(f.Bytes(), "geometry.coordinates")
+	coords := gjson.GetBytes(body, "geometry.coordinates")
 
 	if !coords.Exists() {
 		return nil, errors.New("Missing coordinates")
@@ -237,9 +259,9 @@ func FeatureToMultiPoint(f geojson.Feature) (shp.Shape, error) {
 	return &multi, nil
 }
 
-func FeatureToPolyline(f geojson.Feature) (shp.Shape, error) {
+func FeatureToPolyline(body []byte) (shp.Shape, error) {
 
-	coords := gjson.GetBytes(f.Bytes(), "geometry.coordinates")
+	coords := gjson.GetBytes(body, "geometry.coordinates")
 
 	if !coords.Exists() {
 		return nil, errors.New("Missing coordinates")
@@ -264,9 +286,9 @@ func FeatureToPolyline(f geojson.Feature) (shp.Shape, error) {
 	return polygon, nil
 }
 
-func FeatureToPoint(f geojson.Feature) (shp.Shape, error) {
+func FeatureToPoint(body []byte) (shp.Shape, error) {
 
-	c, err := whosonfirst.Centroid(f)
+	c, err := properties.Centroid(body)
 
 	if err != nil {
 		return nil, err

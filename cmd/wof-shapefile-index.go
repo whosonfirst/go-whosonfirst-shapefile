@@ -12,12 +12,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/whosonfirst/go-whosonfirst-cli/flags"
+	"github.com/sfomuseum/go-flags/multi"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2/feature"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2/properties/whosonfirst"
 	"github.com/whosonfirst/go-whosonfirst-index"
 	"github.com/whosonfirst/go-whosonfirst-index/utils"
-	"github.com/whosonfirst/go-whosonfirst-log"
 	"github.com/whosonfirst/go-whosonfirst-shapefile"
 	"github.com/whosonfirst/warning"
 	
@@ -56,7 +55,7 @@ func main() {
 
 	flag.Parse()
 
-	logger := log.SimpleWOFLogger()
+	logger := log.Default
 
 	stdout := io.Writer(os.Stdout)
 	logger.AddLogger(stdout, "status")
@@ -73,7 +72,7 @@ func main() {
 
 	mu := new(sync.Mutex)
 
-	cb := func(fh io.Reader, ctx context.Context, args ...interface{}) error {
+	cb := func(ctx context.Context, path string, r io.ReadSeeker, args ...interface{}) error {
 
 		path, err := index.PathForContext(ctx)
 
