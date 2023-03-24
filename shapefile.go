@@ -4,9 +4,11 @@ package shapefile
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/jonas-p/go-shp"
@@ -125,13 +127,13 @@ func (wr *Writer) WriteProjFile() error {
 	fh, err := os.OpenFile(prj_path, os.O_RDWR|os.O_CREATE, 0644)
 
 	if err != nil {
-		return nil
+		return fmt.Errorf("Failed to open '%s', %w", prj_path, err)
 	}
 
 	_, err = fh.Write([]byte(`GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]`))
 
 	if err != nil {
-		return nil
+		return fmt.Errorf("Failed to write projection, %w", err) 
 	}
 
 	return fh.Close()
@@ -159,7 +161,7 @@ func (wr *Writer) AddFeature(body []byte) (int32, error) {
 
 	inception := properties.Inception(body)
 	cessation := properties.Cessation(body)
-	
+
 	s, err := FeatureToShape(body, wr.shapetype)
 
 	if err != nil {
@@ -174,7 +176,7 @@ func (wr *Writer) AddFeature(body []byte) (int32, error) {
 	// (20180815/thisisaaronland)
 
 	str_id := strconv.FormatInt(id, 10)
-	
+
 	wr.shapewriter.WriteAttribute(i, 0, str_id)
 	wr.shapewriter.WriteAttribute(i, 1, name)
 	wr.shapewriter.WriteAttribute(i, 2, placetype)
@@ -197,7 +199,7 @@ func FeatureToShape(body []byte, shapetype shp.ShapeType) (shp.Shape, error) {
 	case shp.POLYGON:
 		return FeatureToPolygon(body)
 	default:
-		return nil, errors.New("Unsupported shape type")
+		return nil, fmt.Errorf("Unsupported shape type, '%s'", shapetype)
 	}
 }
 
@@ -206,7 +208,7 @@ func FeatureToMultiPoint(body []byte) (shp.Shape, error) {
 	coords := gjson.GetBytes(body, "geometry.coordinates")
 
 	if !coords.Exists() {
-		return nil, errors.New("Missing coordinates")
+		return nil, fmt.Errorf("Missing geometry.coordinates property")
 	}
 
 	points := make([]shp.Point, 0)
@@ -264,7 +266,7 @@ func FeatureToPolyline(body []byte) (shp.Shape, error) {
 	coords := gjson.GetBytes(body, "geometry.coordinates")
 
 	if !coords.Exists() {
-		return nil, errors.New("Missing coordinates")
+		return nil, fmt.Errorf("Missing geometry.coordinates property")
 	}
 
 	points := make([]shp.Point, 0)
@@ -288,19 +290,17 @@ func FeatureToPolyline(body []byte) (shp.Shape, error) {
 
 func FeatureToPoint(body []byte) (shp.Shape, error) {
 
-	c, err := properties.Centroid(body)
+	c, _, err := properties.Centroid(body)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to derive centroid, %w", err)
 	}
 
-	coord := c.Coord()
-
-	pt := shp.Point{coord.X, coord.Y}
+	pt := shp.Point{c.Lon(), c.Lat()}
 	return &pt, nil
 }
 
-func FeatureToPolygon(f geojson.Feature) (shp.Shape, error) {
+func FeatureToPolygon(body []byte) (shp.Shape, error) {
 
 	polys, err := f.Polygons()
 
@@ -313,11 +313,11 @@ func FeatureToPolygon(f geojson.Feature) (shp.Shape, error) {
 	for _, poly := range polys {
 
 		/*
-		if len(poly.InteriorRings()) > 0 {
-			return nil, errors.New("Polygon has interior rings")
-		}
+			if len(poly.InteriorRings()) > 0 {
+				return nil, errors.New("Polygon has interior rings")
+			}
 		*/
-		
+
 		ext := poly.ExteriorRing()
 
 		pts := make([]shp.Point, 0)
