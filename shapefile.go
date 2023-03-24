@@ -4,14 +4,15 @@ package shapefile
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/jonas-p/go-shp"
 	"github.com/tidwall/gjson"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2/properties/whosonfirst"
-	"github.com/whosonfirst/go-whosonfirst-log"
-	"os"
-	"path/filepath"
-	"strings"
+	"github.com/whosonfirst/go-whosonfirst-log"	
 )
 
 type Writer struct {
