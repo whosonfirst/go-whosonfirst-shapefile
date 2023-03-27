@@ -2,16 +2,17 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 	"sync"
 
 	"github.com/whosonfirst/go-whosonfirst-iterate/v2/iterator"
 	"github.com/whosonfirst/go-whosonfirst-shapefile"
+	"github.com/whosonfirst/go-whosonfirst-uri"
 )
 
 func main() {
@@ -27,15 +28,14 @@ func main() {
 	flag.Parse()
 
 	ctx := context.Background()
-	logger := log.Default
+	logger := log.Default()
 
-	stdout := io.Writer(os.Stdout)
-	logger.AddLogger(stdout, "status")
+	uris := flag.Args()
 
 	writer, err := shapefile.NewWriterFromString(*out, *shapetype)
 
 	if err != nil {
-		logger.Fatal("Failed to create new shape because %s", err)
+		logger.Fatalf("Failed to create new shape because %s", err)
 	}
 
 	writer.Logger = logger
@@ -44,7 +44,7 @@ func main() {
 
 	mu := new(sync.Mutex)
 
-	cb := func(ctx context.Context, path string, r io.ReadSeeker, args ...interface{}) error {
+	iter_cb := func(ctx context.Context, path string, r io.ReadSeeker, args ...interface{}) error {
 
 		_, uri_args, err := uri.ParseURI(path)
 
@@ -52,7 +52,7 @@ func main() {
 			return fmt.Errorf("Failed to parse %s, %w", path, err)
 		}
 
-		if uri_args.IsAlternate(uri_args) {
+		if uri_args.IsAlternate {
 			return nil
 		}
 

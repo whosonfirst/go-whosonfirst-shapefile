@@ -12,7 +12,9 @@ import (
 	"strings"
 
 	"github.com/jonas-p/go-shp"
+	"github.com/paulmach/orb"
 	"github.com/tidwall/gjson"
+	"github.com/whosonfirst/go-whosonfirst-feature/geometry"
 	"github.com/whosonfirst/go-whosonfirst-feature/properties"
 )
 
@@ -133,7 +135,7 @@ func (wr *Writer) WriteProjFile() error {
 	_, err = fh.Write([]byte(`GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]`))
 
 	if err != nil {
-		return fmt.Errorf("Failed to write projection, %w", err) 
+		return fmt.Errorf("Failed to write projection, %w", err)
 	}
 
 	return fh.Close()
@@ -302,32 +304,38 @@ func FeatureToPoint(body []byte) (shp.Shape, error) {
 
 func FeatureToPolygon(body []byte) (shp.Shape, error) {
 
-	polys, err := f.Polygons()
+	geom_type, err := geometry.Type(body)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to derive geometry type, %w", err)
 	}
+
+	switch geom_type {
+	case "Polygon", "MultiPolygon":
+		// pass
+	default:
+		return nil, fmt.Errorf("Invalid geometry type, %w", geom_type)
+	}
+
+	geojson_geom, err := geometry.Geometry(body)
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to derive geometry, %w", err)
+	}
+
+	orb_geom := geojson_geom.Geometry()
 
 	points := make([][]shp.Point, 0)
 
-	for _, poly := range polys {
+	for i, ring := range orb_geom.(orb.Polygon) {
 
-		/*
-			if len(poly.InteriorRings()) > 0 {
-				return nil, errors.New("Polygon has interior rings")
-			}
-		*/
+		pts := make([]shp.Point, len(ring))
 
-		ext := poly.ExteriorRing()
-
-		pts := make([]shp.Point, 0)
-
-		for _, coord := range ext.Vertices() {
-			pt := shp.Point{coord.X, coord.Y}
-			pts = append(pts, pt)
+		for j, orb_pt := range ring {
+			pts[j] = shp.Point{orb_pt.Lon(), orb_pt.Lat()}
 		}
 
-		points = append(points, pts)
+		points[i] = pts
 	}
 
 	polygon := shp.NewPolyLine(points)

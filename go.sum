@@ -35,7 +35,9 @@ github.com/whosonfirst/go-whosonfirst-flags v0.4.4/go.mod h1:C9X7vQvNR/u55AfOHYU
 github.com/whosonfirst/go-whosonfirst-iterate/v2 v2.3.2 h1:We3TSq7Tl+Ntk0pr9ZuPMRfBy0X9s4eO2VknCLWuCZc=
 github.com/whosonfirst/go-whosonfirst-iterate/v2 v2.3.2/go.mod h1:PtzP7XhL6LudTnfZhU7AnKDjGqy0Bp/oB2HLyuzpSQk=
 github.com/whosonfirst/go-whosonfirst-placetypes v0.3.0/go.mod h1:ez0VFkGFbgT2/z2oi3PIuW6FewsZ2+5glyfDD79XEHk=
+github.com/whosonfirst/go-whosonfirst-sources v0.1.0 h1:JuKLa6KWke22jBfJ1pM9WQHoz1/3pbDv2C+aR+THPPQ=
 github.com/whosonfirst/go-whosonfirst-sources v0.1.0/go.mod h1:EUMHyGzUmqPPxlMmOp+28BFeoBdxxE0HCKRd67lkqGM=
+github.com/whosonfirst/go-whosonfirst-uri v1.2.0 h1:lhmRsIhcpTr5HAo+kXKRGsSt76HTh3Ko/oTR2jpCm/o=
 github.com/whosonfirst/go-whosonfirst-uri v1.2.0/go.mod h1:CuVygTCUpMG945MMvqHyqxvc/L5YkDaMrrVpRFr7ZxY=
 github.com/whosonfirst/walk v0.0.2 h1:fA0xskpnorC8OTvA1IKVOwQ12joCW6R5k2+/qd9lS7k=
 github.com/whosonfirst/walk v0.0.2/go.mod h1:HvRa/XX8jGtggvwAFMWMMuNy1M3+ZDqDX2hxiGR9b2o=
