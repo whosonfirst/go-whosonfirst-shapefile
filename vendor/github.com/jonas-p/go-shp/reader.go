@@ -6,7 +6,6 @@ import (
 	"io"
 	"math"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -40,15 +39,12 @@ type readSeekCloser interface {
 
 // Open opens a Shapefile for reading.
 func Open(filename string) (*Reader, error) {
-	ext := filepath.Ext(filename)
-	if strings.ToLower(ext) != ".shp" {
-		return nil, fmt.Errorf("Invalid file extension: %s", filename)
-	}
-	shp, err := os.Open(filename)
+	filename = filename[0 : len(filename)-3]
+	shp, err := os.Open(filename + "shp")
 	if err != nil {
 		return nil, err
 	}
-	s := &Reader{filename: strings.TrimSuffix(filename, ext), shp: shp}
+	s := &Reader{filename: filename, shp: shp}
 	s.readHeaders()
 	return s, nil
 }
@@ -194,7 +190,7 @@ func (r *Reader) openDbf() (err error) {
 		return
 	}
 
-	r.dbf, err = os.Open(r.filename + ".dbf")
+	r.dbf, err = os.Open(r.filename + "dbf")
 	if err != nil {
 		return
 	}

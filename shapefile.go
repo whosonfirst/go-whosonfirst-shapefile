@@ -4,21 +4,20 @@ package shapefile
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/jonas-p/go-shp"
 	"github.com/tidwall/gjson"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2"
 	"github.com/whosonfirst/go-whosonfirst-geojson-v2/properties/whosonfirst"
-	"github.com/whosonfirst/go-whosonfirst-log"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 type Writer struct {
 	shapewriter *shp.Writer
 	shapetype   shp.ShapeType // https://godoc.org/github.com/jonas-p/go-shp#ShapeType
 	path        string
-	Logger      *log.WOFLogger
 }
 
 func ShapeTypes() []string {
@@ -101,12 +100,9 @@ func NewWriter(path string, shapetype shp.ShapeType) (*Writer, error) {
 
 	shapewriter.SetFields(fields)
 
-	logger := log.SimpleWOFLogger()
-
 	wr := Writer{
 		shapewriter: shapewriter,
 		shapetype:   shapetype,
-		Logger:      logger,
 		path:        abs_path,
 	}
 
